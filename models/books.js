@@ -6,7 +6,7 @@ const bookSchema = new Schema({
     type: String
   },
   comments: [String],
-  commentCount: {
+  commentcount: {
     type: Number,
     default: 0
   }
