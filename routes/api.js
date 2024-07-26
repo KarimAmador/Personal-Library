@@ -12,17 +12,45 @@ const Book = require('../models/books.js');
 module.exports = function (app) {
 
   app.route('/api/books')
-    .get(function (req, res){
+    .get(async function (req, res){
+      try {
+        const bookArray = await Book.find().select({__v: 0}).exec();
+
+        res.json(bookArray);
+      } catch (err) {
+        console.log(err);
+        res.json({error: err.message});
+      }
       //response will be array of book objects
       //json res format: [{"_id": bookid, "title": book_title, "commentcount": num_of_comments },...]
     })
     
-    .post(function (req, res){
+    .post(async function (req, res){
       let title = req.body.title;
+
+      if (!title) return res.status(400).type('text').send('missing required field title');
+
+      try {
+        const newBook = new Book(req.body);
+        const result = await newBook.save();
+        
+        res.json({_id: result._id, title: result.title});
+      } catch (err) {
+        console.log(err);
+        res.json({error: err.message});
+      }
       //response will contain new book object including atleast _id and title
     })
     
-    .delete(function(req, res){
+    .delete(async function(req, res){
+      try {
+        await Book.deleteMany();
+  
+        res.type('text').send('complete delete successful');
+      } catch (err) {
+        console.log(err);
+        res.json({error: err.message});
+      }
       //if successful response will be 'complete delete successful'
     });
 
