@@ -7,6 +7,7 @@
 */
 
 'use strict';
+const Book = require('../models/books.js');
 
 module.exports = function (app) {
 
