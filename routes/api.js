@@ -29,7 +29,7 @@ module.exports = function (app) {
     .post(async function (req, res){
       let title = req.body.title;
 
-      if (!title) return res.status(400).type('text').send('missing required field title');
+      if (!title) return res.type('text').send('missing required field title');
 
       try {
         const newBook = new Book(req.body);
