@@ -7,6 +7,7 @@
 */
 
 'use strict';
+const { default: mongoose } = require('mongoose');
 const Book = require('../models/books.js');
 
 module.exports = function (app) {
@@ -54,22 +55,69 @@ module.exports = function (app) {
       //if successful response will be 'complete delete successful'
     });
 
-
+  // Custom error for non-existing book
+  const NoBookExists = new Error('no book exists');
 
   app.route('/api/books/:id')
-    .get(function (req, res){
+    .get(async function (req, res){
       let bookid = req.params.id;
+
+      try {
+        if (!mongoose.isValidObjectId(bookid)) throw NoBookExists;
+
+        let result = await Book.findById(bookid).select(['_id', 'title', 'comments']).exec();
+        
+        if (!result) throw NoBookExists;
+
+        res.json(result)
+      } catch (err) {
+        console.log(err);
+        res.type('text').send(err.message);
+      }
       //json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
     })
     
-    .post(function(req, res){
+    .post(async function(req, res){
       let bookid = req.params.id;
       let comment = req.body.comment;
+
+      if (!comment) return res.type('text').send('missing required field comment');
+
+      try {
+        if (!mongoose.isValidObjectId(bookid)) throw NoBookExists;
+
+        let book = await Book.findById(bookid);
+
+        if (!book) throw NoBookExists;
+
+        book.comments.push(comment);
+        book.$inc('commentcount', 1);
+
+        await book.save();
+
+        res.json({ _id: book._id, title: book.title, comments: book.comments });
+      } catch (err) {
+        console.log(err);
+        res.type('text').send(err.message);
+      }
       //json res format same as .get
     })
     
-    .delete(function(req, res){
+    .delete(async function(req, res){
       let bookid = req.params.id;
+
+      try {
+        if (!mongoose.isValidObjectId(bookid)) throw NoBookExists;
+
+        let result = await Book.findByIdAndDelete(bookid);
+
+        if (!result) throw NoBookExists;
+
+        res.type('text').send('delete successful');
+      } catch (err) {
+        console.log(err);
+        res.type('text').send(err.message);
+      }
       //if successful response will be 'delete successful'
     });
   
